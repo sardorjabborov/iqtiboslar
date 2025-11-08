@@ -1,5 +1,5 @@
 const postsContainer = document.getElementById("postsContainer");
-const API_URL = "https://iqtiboslar-backend.onrender.com/api/posts";
+const API_URL = "https://iqtiboslar-backend.onrender.com/api/posts"; // Render backend URL
 
 // Modal elementlari
 const commentModal = document.getElementById("commentModal");
@@ -9,11 +9,11 @@ const thankYouMessage = document.getElementById("thankYouMessage");
 const subscribeBtn = document.getElementById("subscribeBtn");
 const subscribeMessage = document.getElementById("subscribeMessage");
 const userCommentInput = document.getElementById("userComment");
-const subName = document.getElementById("subName");
-const subEmail = document.getElementById("subEmail");
-const subPhone = document.getElementById("subPhone");
+const userNameInput = document.getElementById("subName"); // Foydalanuvchi ismi
+const userEmailInput = document.getElementById("subEmail"); // Email
+const userPhoneInput = document.getElementById("subPhone"); // Telefon
 
-let currentPostId = null; // hozirgi postning MongoDB ID si
+let currentPostId = null; // Qaysi postga comment yozilayotgani
 
 // --- Fetch Posts ---
 async function fetchPosts() {
@@ -34,6 +34,9 @@ function renderPosts(posts) {
     const postCard = document.createElement("div");
     postCard.classList.add("post-card");
 
+    // Commentlarni render qilish
+    const commentsHTML = post.comments.map(c => `<p><strong>${c.user}:</strong> ${c.comment}</p>`).join("");
+
     postCard.innerHTML = `
       <img src="${post.coverImage}" alt="${post.title}">
       <div class="post-content">
@@ -41,9 +44,8 @@ function renderPosts(posts) {
         <h3>${post.author}</h3>
         <p>${post.excerpt}</p>
         <button class="comment-btn" data-id="${post._id}">Fikringizni qoldiring</button>
-
-        <div class="comments">
-          ${post.comments.map(c => `<p><strong>${c.user}:</strong> ${c.comment}</p>`).join("")}
+        <div class="comments-section">
+          ${commentsHTML}
         </div>
       </div>
     `;
@@ -72,10 +74,9 @@ window.onclick = e => {
 // --- Comment yuborish ---
 submitCommentBtn.onclick = async () => {
   const comment = userCommentInput.value.trim();
-  if (!comment) return alert("Iltimos, fikringizni yozing.");
+  const user = userNameInput.value.trim();
 
-  // Foydalanuvchi nomini default qilamiz
-  const user = "Anonim";
+  if (!user || !comment) return alert("Iltimos, ism va fikringizni kiriting.");
 
   try {
     const res = await fetch(`${API_URL}/${currentPostId}/comments`, {
@@ -89,7 +90,7 @@ submitCommentBtn.onclick = async () => {
     if (data.success) {
       thankYouMessage.classList.remove("hidden");
       submitCommentBtn.disabled = true;
-      fetchPosts(); // comment qo‘shilgandan keyin postlarni yangilash
+      fetchPosts(); // Comment qo‘shilgandan keyin postlarni yangilash
     } else {
       alert("Comment qo‘shishda xato yuz berdi.");
     }
@@ -101,19 +102,19 @@ submitCommentBtn.onclick = async () => {
 
 // --- Azo bo‘lish ---
 subscribeBtn.onclick = () => {
-  const name = subName.value.trim();
-  const email = subEmail.value.trim();
-  const phone = subPhone.value.trim();
+  const name = userNameInput.value.trim();
+  const email = userEmailInput.value.trim();
+  const phone = userPhoneInput.value.trim();
 
   if (!name || !email || !phone) return alert("Iltimos, barcha maydonlarni to‘ldiring.");
 
   subscribeMessage.textContent = "Siz muvaffaqiyatli azo bo'ldingiz!";
   subscribeMessage.classList.remove("hidden");
 
-  // Inputlarni tozalash
-  subName.value = "";
-  subEmail.value = "";
-  subPhone.value = "";
+  // Maydonlarni tozalash
+  userNameInput.value = "";
+  userEmailInput.value = "";
+  userPhoneInput.value = "";
 };
 
 // --- Sahifa yuklanganda ---
