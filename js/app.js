@@ -1,7 +1,7 @@
 const postsContainer = document.getElementById("postsContainer");
 const API_URL = "https://iqtiboslar-backend.onrender.com/api/posts";
-const SUB_URL = "https://iqtiboslar-backend.onrender.com/api/subscribers";
 
+// Modal elementlari
 const commentModal = document.getElementById("commentModal");
 const closeModal = document.querySelector(".close");
 const submitCommentBtn = document.getElementById("submitComment");
@@ -13,7 +13,7 @@ const subName = document.getElementById("subName");
 const subEmail = document.getElementById("subEmail");
 const subPhone = document.getElementById("subPhone");
 
-let currentPostId = null;
+let currentPostId = null; // hozirgi postning MongoDB ID si
 
 // --- Fetch Posts ---
 async function fetchPosts() {
@@ -22,7 +22,7 @@ async function fetchPosts() {
     const posts = await res.json();
     renderPosts(posts);
   } catch (err) {
-    console.error(err);
+    console.error("Postlarni olishda xato:", err);
     postsContainer.innerHTML = "<p>Postlarni yuklab bo‘lmadi.</p>";
   }
 }
@@ -34,11 +34,6 @@ function renderPosts(posts) {
     const postCard = document.createElement("div");
     postCard.classList.add("post-card");
 
-    let commentsHTML = "";
-    post.comments.forEach(c => {
-      commentsHTML += `<p><strong>${c.user}:</strong> ${c.comment}</p>`;
-    });
-
     postCard.innerHTML = `
       <img src="${post.coverImage}" alt="${post.title}">
       <div class="post-content">
@@ -46,13 +41,17 @@ function renderPosts(posts) {
         <h3>${post.author}</h3>
         <p>${post.excerpt}</p>
         <button class="comment-btn" data-id="${post._id}">Fikringizni qoldiring</button>
-        <div class="comments">${commentsHTML}</div>
+
+        <div class="comments">
+          ${post.comments.map(c => `<p><strong>${c.user}:</strong> ${c.comment}</p>`).join("")}
+        </div>
       </div>
     `;
 
     postsContainer.appendChild(postCard);
   });
 
+  // Tugmalarni event bilan bog‘lash
   document.querySelectorAll(".comment-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       currentPostId = btn.dataset.id;
@@ -64,17 +63,19 @@ function renderPosts(posts) {
   });
 }
 
-// --- Modal ---
+// --- Modalni yopish ---
 closeModal.onclick = () => commentModal.style.display = "none";
 window.onclick = e => {
   if (e.target === commentModal) commentModal.style.display = "none";
 };
 
-// --- Submit Comment ---
+// --- Comment yuborish ---
 submitCommentBtn.onclick = async () => {
   const comment = userCommentInput.value.trim();
-  const user = subName.value.trim(); // ism maydonidan olamiz
-  if (!user || !comment) return alert("Iltimos, ism va fikringizni yozing.");
+  if (!comment) return alert("Iltimos, fikringizni yozing.");
+
+  // Foydalanuvchi nomini default qilamiz
+  const user = "Anonim";
 
   try {
     const res = await fetch(`${API_URL}/${currentPostId}/comments`, {
@@ -82,11 +83,13 @@ submitCommentBtn.onclick = async () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user, comment })
     });
+
     const data = await res.json();
+
     if (data.success) {
       thankYouMessage.classList.remove("hidden");
       submitCommentBtn.disabled = true;
-      fetchPosts();
+      fetchPosts(); // comment qo‘shilgandan keyin postlarni yangilash
     } else {
       alert("Comment qo‘shishda xato yuz berdi.");
     }
@@ -96,33 +99,22 @@ submitCommentBtn.onclick = async () => {
   }
 };
 
-// --- Subscribe ---
-subscribeBtn.onclick = async () => {
+// --- Azo bo‘lish ---
+subscribeBtn.onclick = () => {
   const name = subName.value.trim();
   const email = subEmail.value.trim();
   const phone = subPhone.value.trim();
+
   if (!name || !email || !phone) return alert("Iltimos, barcha maydonlarni to‘ldiring.");
 
-  try {
-    const res = await fetch(SUB_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, phone })
-    });
-    const data = await res.json();
-    if (data.success) {
-      subscribeMessage.textContent = "Siz muvaffaqiyatli azo bo'ldingiz!";
-      subscribeMessage.classList.remove("hidden");
-      subName.value = "";
-      subEmail.value = "";
-      subPhone.value = "";
-    } else {
-      alert("Ma’lumot saqlanmadi.");
-    }
-  } catch (err) {
-    console.error(err);
-    alert("Server bilan ulanishda xato.");
-  }
+  subscribeMessage.textContent = "Siz muvaffaqiyatli azo bo'ldingiz!";
+  subscribeMessage.classList.remove("hidden");
+
+  // Inputlarni tozalash
+  subName.value = "";
+  subEmail.value = "";
+  subPhone.value = "";
 };
 
+// --- Sahifa yuklanganda ---
 fetchPosts();
