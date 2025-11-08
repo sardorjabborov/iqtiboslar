@@ -1,5 +1,5 @@
 const postsContainer = document.getElementById("postsContainer");
-const API_URL = "https://iqtiboslar-backend.onrender.com/api/posts"; // backend bilan moslashtiring
+const API_URL = "https://iqtiboslar-backend.onrender.com/api/posts";
 
 // Modal elementlari
 const commentModal = document.getElementById("commentModal");
@@ -13,7 +13,7 @@ const subName = document.getElementById("subName");
 const subEmail = document.getElementById("subEmail");
 const subPhone = document.getElementById("subPhone");
 
-let currentPostIndex = null; // qaysi postga comment yozilayotgani
+let currentPostId = null; // hozirgi postning MongoDB _id sini saqlaymiz
 
 // --- Fetch Posts ---
 async function fetchPosts() {
@@ -30,7 +30,7 @@ async function fetchPosts() {
 // --- Render Posts ---
 function renderPosts(posts) {
   postsContainer.innerHTML = "";
-  posts.forEach((post, index) => {
+  posts.forEach(post => {
     const postCard = document.createElement("div");
     postCard.classList.add("post-card");
 
@@ -40,17 +40,17 @@ function renderPosts(posts) {
         <h2>${post.title}</h2>
         <h3>${post.author}</h3>
         <p>${post.excerpt}</p>
-        <button class="comment-btn" data-index="${index}">Fikringizni qoldiring</button>
+        <button class="comment-btn" data-id="${post._id}">Fikringizni qoldiring</button>
       </div>
     `;
 
     postsContainer.appendChild(postCard);
   });
 
-  // Tugmalarni event bilan bog‘lash
+  // Comment tugmalarini event bilan bog‘lash
   document.querySelectorAll(".comment-btn").forEach(btn => {
     btn.addEventListener("click", () => {
-      currentPostIndex = btn.dataset.index;
+      currentPostId = btn.dataset.id; // _id ni olamiz
       userCommentInput.value = "";
       submitCommentBtn.disabled = false;
       thankYouMessage.classList.add("hidden");
@@ -63,7 +63,6 @@ function renderPosts(posts) {
 closeModal.onclick = () => commentModal.style.display = "none";
 window.onclick = e => {
   if (e.target === commentModal) commentModal.style.display = "none";
-  if (e.target === thankYouMessage) thankYouMessage.style.display = "none";
 };
 
 // --- Comment yuborish ---
@@ -72,10 +71,10 @@ submitCommentBtn.onclick = async () => {
   if (!comment) return alert("Iltimos, fikringizni yozing.");
 
   try {
-    const res = await fetch(`${API_URL}/${currentPostIndex}/comments`, {
+    const res = await fetch(`${API_URL}/${currentPostId}/comments`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ comment })
+      body: JSON.stringify({ user: "Foydalanuvchi", comment })
     });
 
     const data = await res.json();
