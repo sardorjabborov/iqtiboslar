@@ -13,7 +13,7 @@ const subName = document.getElementById("subName");
 const subEmail = document.getElementById("subEmail");
 const subPhone = document.getElementById("subPhone");
 
-let currentPostId = null; // hozirgi postning MongoDB _id sini saqlaymiz
+let currentPostId = null; // hozirgi postning MongoDB ID si
 
 // --- Fetch Posts ---
 async function fetchPosts() {
@@ -41,16 +41,20 @@ function renderPosts(posts) {
         <h3>${post.author}</h3>
         <p>${post.excerpt}</p>
         <button class="comment-btn" data-id="${post._id}">Fikringizni qoldiring</button>
+
+        <div class="comments">
+          ${post.comments.map(c => `<p><strong>${c.user}:</strong> ${c.comment}</p>`).join("")}
+        </div>
       </div>
     `;
 
     postsContainer.appendChild(postCard);
   });
 
-  // Comment tugmalarini event bilan bog‘lash
+  // Tugmalarni event bilan bog‘lash
   document.querySelectorAll(".comment-btn").forEach(btn => {
     btn.addEventListener("click", () => {
-      currentPostId = btn.dataset.id; // _id ni olamiz
+      currentPostId = btn.dataset.id;
       userCommentInput.value = "";
       submitCommentBtn.disabled = false;
       thankYouMessage.classList.add("hidden");
@@ -70,11 +74,14 @@ submitCommentBtn.onclick = async () => {
   const comment = userCommentInput.value.trim();
   if (!comment) return alert("Iltimos, fikringizni yozing.");
 
+  // Foydalanuvchi nomini default qilamiz
+  const user = "Anonim";
+
   try {
     const res = await fetch(`${API_URL}/${currentPostId}/comments`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user: "Foydalanuvchi", comment })
+      body: JSON.stringify({ user, comment })
     });
 
     const data = await res.json();
@@ -102,6 +109,8 @@ subscribeBtn.onclick = () => {
 
   subscribeMessage.textContent = "Siz muvaffaqiyatli azo bo'ldingiz!";
   subscribeMessage.classList.remove("hidden");
+
+  // Inputlarni tozalash
   subName.value = "";
   subEmail.value = "";
   subPhone.value = "";
