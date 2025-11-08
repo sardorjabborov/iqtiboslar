@@ -1,5 +1,5 @@
 const postsContainer = document.getElementById("postsContainer");
-const API_URL = "https://iqtiboslar-backend.onrender.com"; // backend bilan moslashtiring
+const API_URL = "https://iqtiboslar-backend.onrender.com/api/posts"; // backend bilan moslashtiring
 
 // Modal elementlari
 const commentModal = document.getElementById("commentModal");
